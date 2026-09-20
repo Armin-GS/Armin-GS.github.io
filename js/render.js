@@ -42,54 +42,128 @@
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M4 4l4 16 4-11 4 11 4-16M12 4v6"/></svg>',
   };
 
-  // Geomatics equipment glyphs.
-  //  - Optical instruments carry a `.track-yaw` group (the whole sighting
-  //    head: telescope barrel, lens, mount) that pans left/right around a
-  //    vertical axis at the inline transform-origin. At rest the barrel
-  //    points right; negative yaw points it left.
-  //  - The tape carries a `.track-extend` ribbon that stretches along X.
-  //  data-pivot-x / data-pivot-y: rotation/anchor point as a fraction of
-  //  the rendered box (used by the tracker to read cursor direction).
+  // Geomatics instrument glyphs, two-axis model.
+  //
+  // Real survey instruments move on two axes:
+  //   pan  (azimuth)   - the alidade rotates about a VERTICAL axis. In a 2D
+  //                      side view this reads as a horizontal mirror.
+  //   tilt (elevation) - the telescope rotates about the horizontal trunnion
+  //                      axis. Only the barrel moves; the standards do not.
+  //
+  // So each optical instrument nests:
+  //   <g class="track-pan">            alidade: standards + telescope
+  //     <g class="track-tilt"> ... </g>  telescope barrel only, pivot = trunnion
+  //   </g>
+  // Everything outside .track-pan (tripod, tribrach, pole) is fixed.
+  //
+  // data-kind    optical | extend
+  // data-pivot-x/y   trunnion position as a fraction of the box, used to
+  //                  measure the cursor vector. Keep x near 0.5 so mirroring
+  //                  does not shift the pivot.
+  // data-tilt-max    elevation limit in degrees.
   const INSTRUMENTS = {
+
+    // Total station: chunky alidade, objective hood, tripod.
     totalStation: html`
-      <svg class="instrument" viewBox="0 0 64 64" data-kind="yaw" data-pivot-x="0.5" data-pivot-y="0.42" aria-hidden="true">
+      <svg class="instrument" viewBox="0 0 64 64" data-kind="optical" data-pivot-x="0.5" data-pivot-y="0.42" data-tilt-max="26" aria-hidden="true">
         <g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M32 42 L18 60 M32 42 L46 60 M32 44 V60"/>
-          <path d="M24 42 H40"/>
-          <g class="track-yaw" style="transform-origin:32px 30px">
-            <path d="M26 38 V32 M38 38 V32"/>
-            <rect x="22" y="22" width="20" height="10" rx="2"/>
-            <rect x="42" y="24.5" width="9" height="5" rx="1.5"/>
-            <circle cx="27" cy="27" r="1.6" fill="currentColor" stroke="none"/>
+          <path d="M32 44 L19 60 M32 44 L45 60 M32 46 V60"/>
+          <path d="M24 44 H40"/>
+          <g class="track-pan" style="transform-origin:32px 32px">
+            <path d="M26 43 V32 M38 43 V32"/>
+            <g class="track-tilt" style="transform-origin:32px 27px">
+              <rect x="21" y="22" width="22" height="10" rx="2"/>
+              <rect x="43" y="24.5" width="7" height="5" rx="1.5"/>
+              <circle cx="26" cy="27" r="1.7" fill="currentColor" stroke="none"/>
+            </g>
           </g>
         </g>
       </svg>`,
+
+    // Theodolite: slim standards, circular base plate.
     theodolite: html`
-      <svg class="instrument" viewBox="0 0 64 64" data-kind="yaw" data-pivot-x="0.5" data-pivot-y="0.42" aria-hidden="true">
+      <svg class="instrument" viewBox="0 0 64 64" data-kind="optical" data-pivot-x="0.5" data-pivot-y="0.44" data-tilt-max="28" aria-hidden="true">
         <g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M32 47 L19 61 M32 47 L45 61 M32 47 V61"/>
-          <ellipse cx="32" cy="44" rx="10" ry="2.6"/>
-          <g class="track-yaw" style="transform-origin:32px 33px">
-            <path d="M24 41 V31 M40 41 V31"/>
-            <rect x="22" y="25" width="20" height="8" rx="2"/>
-            <path d="M42 29 H50"/>
-            <circle cx="27" cy="29" r="1.6" fill="currentColor" stroke="none"/>
+          <path d="M32 48 L20 61 M32 48 L44 61 M32 48 V61"/>
+          <ellipse cx="32" cy="45" rx="10" ry="2.6"/>
+          <g class="track-pan" style="transform-origin:32px 32px">
+            <path d="M25 43 V33 M39 43 V33"/>
+            <g class="track-tilt" style="transform-origin:32px 28px">
+              <rect x="22" y="24" width="20" height="8" rx="2"/>
+              <path d="M42 28 H49"/>
+              <circle cx="26.5" cy="28" r="1.6" fill="currentColor" stroke="none"/>
+            </g>
           </g>
         </g>
       </svg>`,
+
+    // Automatic level: long barrel, low mount, small elevation range.
+    level: html`
+      <svg class="instrument" viewBox="0 0 64 64" data-kind="optical" data-pivot-x="0.5" data-pivot-y="0.48" data-tilt-max="5" aria-hidden="true">
+        <g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M32 44 L19 60 M32 44 L45 60 M32 46 V60"/>
+          <path d="M25 44 H39"/>
+          <g class="track-pan" style="transform-origin:32px 32px">
+            <path d="M32 43 V36"/>
+            <g class="track-tilt" style="transform-origin:32px 31px">
+              <rect x="18" y="27" width="27" height="9" rx="3"/>
+              <rect x="45" y="29" width="6" height="5" rx="1.5"/>
+              <path d="M23 27 V24"/>
+            </g>
+          </g>
+        </g>
+      </svg>`,
+
+    // Prism pole: prism head swivels to face the instrument; pole fixed.
+    prism: html`
+      <svg class="instrument" viewBox="0 0 64 64" data-kind="optical" data-pivot-x="0.5" data-pivot-y="0.33" data-tilt-max="26" aria-hidden="true">
+        <g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M32 30 V57 M32 57 L28 63 M32 57 L36 63"/>
+          <g class="track-pan" style="transform-origin:32px 21px">
+            <g class="track-tilt" style="transform-origin:32px 21px">
+              <circle cx="32" cy="21" r="9"/>
+              <path d="M32 14 L39 25 H25 Z"/>
+              <path d="M41 21 H50"/>
+            </g>
+          </g>
+        </g>
+      </svg>`,
+
+    // GNSS rover: antenna stays level (it must), the controller swivels.
     gnss: html`
-      <svg class="instrument" viewBox="0 0 64 64" data-kind="yaw" data-pivot-x="0.5" data-pivot-y="0.3" aria-hidden="true">
+      <svg class="instrument" viewBox="0 0 64 64" data-kind="optical" data-pivot-x="0.5" data-pivot-y="0.62" data-tilt-max="8" aria-hidden="true">
         <g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M32 24 V55 M32 55 L28 61 M32 55 L36 61"/>
-          <rect x="40" y="36" width="9" height="13" rx="2"/>
-          <path d="M40 42 H32"/>
-          <g class="track-yaw" style="transform-origin:32px 20px">
-            <ellipse cx="32" cy="20" rx="13" ry="4.5"/>
-            <path d="M22 18 Q32 9 42 18"/>
-            <path d="M32 16 V11"/>
+          <path d="M32 24 V56 M32 56 L28 62 M32 56 L36 62"/>
+          <ellipse cx="32" cy="20" rx="13" ry="4.5"/>
+          <path d="M22 18 Q32 9 42 18"/>
+          <g class="track-pan" style="transform-origin:32px 40px">
+            <g class="track-tilt" style="transform-origin:32px 40px">
+              <path d="M32 40 H38"/>
+              <rect x="38" y="33" width="10" height="14" rx="2"/>
+            </g>
           </g>
         </g>
       </svg>`,
+
+    // Survey drone: gimbal camera under the airframe, full pan and tilt.
+    drone: html`
+      <svg class="instrument" viewBox="0 0 64 64" data-kind="optical" data-pivot-x="0.5" data-pivot-y="0.66" data-tilt-max="55" aria-hidden="true">
+        <g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 19 H26 M38 19 H54"/>
+          <path d="M18 19 V23 M46 19 V23"/>
+          <path d="M18 23 L27 30 M46 23 L37 30"/>
+          <rect x="25" y="28" width="14" height="10" rx="2"/>
+          <g class="track-pan" style="transform-origin:32px 42px">
+            <path d="M32 38 V40"/>
+            <g class="track-tilt" style="transform-origin:32px 42px">
+              <circle cx="32" cy="42" r="5"/>
+              <path d="M37 42 H42.5"/>
+            </g>
+          </g>
+        </g>
+      </svg>`,
+
+    // Measuring tape: ribbon pulls out horizontally, reel fixed.
     tape: html`
       <svg class="instrument" viewBox="0 0 64 64" data-kind="extend" data-pivot-x="0.36" data-pivot-y="0.5" aria-hidden="true">
         <g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -102,55 +176,10 @@
           </g>
         </g>
       </svg>`,
-    level: html`
-      <svg class="instrument" viewBox="0 0 64 64" data-kind="yaw" data-pivot-x="0.5" data-pivot-y="0.46" aria-hidden="true">
-        <g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M32 42 L18 60 M32 42 L46 60 M32 44 V60"/>
-          <path d="M25 42 H39"/>
-          <g class="track-yaw" style="transform-origin:32px 32px">
-            <rect x="18" y="27" width="28" height="9" rx="3"/>
-            <rect x="46" y="29" width="7" height="5" rx="1.5"/>
-            <path d="M22 27 V24"/>
-            <circle cx="23" cy="31.5" r="1.6" fill="currentColor" stroke="none"/>
-          </g>
-        </g>
-      </svg>`,
-    prism: html`
-      <svg class="instrument" viewBox="0 0 64 64" data-kind="yaw" data-pivot-x="0.5" data-pivot-y="0.32" aria-hidden="true">
-        <g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M32 31 V57 M32 57 L28 63 M32 57 L36 63"/>
-          <g class="track-yaw" style="transform-origin:32px 20px">
-            <circle cx="32" cy="20" r="9"/>
-            <path d="M32 12 L40 25 H24 Z"/>
-            <path d="M41 20 H47"/>
-          </g>
-        </g>
-      </svg>`,
-    drone: html`
-      <svg class="instrument" viewBox="0 0 64 64" data-kind="yaw" data-pivot-x="0.5" data-pivot-y="0.68" aria-hidden="true">
-        <g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M10 19 H26 M38 19 H54"/>
-          <path d="M18 19 V23 M46 19 V23"/>
-          <path d="M18 23 L27 30 M46 23 L37 30"/>
-          <rect x="25" y="28" width="14" height="10" rx="2"/>
-          <g class="track-yaw" style="transform-origin:32px 38px">
-            <path d="M32 38 V41"/>
-            <circle cx="32" cy="45" r="4"/>
-            <path d="M36 45 H40"/>
-          </g>
-        </g>
-      </svg>`,
   };
 
   // Heading order on the index page; cycles if sections outnumber kinds.
   const INSTRUMENT_ORDER = ["totalStation", "theodolite", "tape", "level", "drone", "prism", "gnss"];
-
-  // Hand-drawn underline scribble for section headings.
-  function scribbleSVG() {
-    return '<svg class="scribble" viewBox="0 0 200 24" preserveAspectRatio="none" aria-hidden="true">' +
-      '<path d="M3 14 C40 4 70 20 100 11 C130 3 160 19 197 9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" pathLength="1"/>' +
-      '</svg>';
-  }
 
   function statusClass(status) {
     const s = status.toLowerCase();
@@ -217,7 +246,7 @@
     mount("#site-footer", html`
       <div class="footer-inner">
         <span class="mono-label">${esc(SITE.meta.name)} · ${esc(SITE.meta.coords)}</span>
-        <span class="mono-label">SHEET COMPILED ${new Date().getFullYear()}</span>
+        <span class="mono-label">Updated ${new Date().getFullYear()}</span>
       </div>`);
   }
 
@@ -225,9 +254,9 @@
 
   function renderHero() {
     mount("#hero", html`
-      <span class="hero-backdrop" aria-hidden="true">GEO</span>
-      <p class="mono-label hero-eyebrow">${esc(SITE.about.eyebrow)} · ${esc(SITE.meta.coords)}</p>
-      <h1 class="hero-name">${esc(SITE.meta.name)}${scribbleSVG()}</h1>
+      <p class="mono-label hero-eyebrow">${esc(SITE.about.eyebrow)}</p>
+      <p class="mono-label hero-coords">${esc(SITE.meta.coords)}</p>
+      <h1 class="hero-name">${esc(SITE.meta.name)}</h1>
       <p class="hero-role">${esc(SITE.meta.role)}</p>
       <p class="hero-loc mono-label">${esc(SITE.meta.location)}</p>`);
   }
@@ -310,7 +339,7 @@
         ${SITE.publications.map((p) => html`
           <li>
             <a class="pub-row" href="publication.html?id=${esc(p.id)}">
-              <span class="mono-label pub-year">${p.year === "n/a" ? "·" : esc(p.year)}</span>
+              <span class="mono-label pub-year">${p.year === "n/a" ? "" : esc(p.year)}</span>
               <div class="pub-main">
                 <h3 class="pub-title">${esc(p.title)}</h3>
                 <p class="pub-venue">${esc(p.kind)} · ${esc(p.venue)}</p>
@@ -403,13 +432,9 @@
 
   // ---------- in-page behaviour --------------------------------------
 
-  // Add a scribble underline + tracking instrument to each section heading.
+  // Place a tracking instrument at the right of each section heading.
   function decorateHeadings() {
     document.querySelectorAll(".section-marker").forEach((marker, i) => {
-      const h = marker.querySelector("h2");
-      if (h && !h.querySelector(".scribble")) {
-        h.insertAdjacentHTML("beforeend", scribbleSVG());
-      }
       if (!marker.querySelector(".instrument")) {
         const kind = INSTRUMENT_ORDER[i % INSTRUMENT_ORDER.length];
         marker.insertAdjacentHTML("beforeend", INSTRUMENTS[kind]);
@@ -417,11 +442,7 @@
     });
   }
 
-  // Animate instruments toward the pointer. Two behaviours:
-  //  yaw    -> the sighting head pans to face the cursor's side (left or
-  //            right via horizontal mirror) with a gentle vertical tilt;
-  //            no full-circle wrap, so crossing the axis never snaps.
-  //  extend -> the tape ribbon stretches along X with cursor distance.
+  // Animate instruments toward the pointer, on two axes (see above).
   // One rAF-throttled pointer listener drives every instance.
   function setupInstrumentTracking() {
     const instruments = Array.from(document.querySelectorAll(".instrument"));
@@ -429,10 +450,6 @@
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     let mx = window.innerWidth / 2, my = window.innerHeight / 2, queued = false;
-
-    const TILT_MAX = 22;      // degrees of vertical lean
-    const EXTEND_MIN = 0.45;  // tape ribbon scale floor
-    const EXTEND_MAX = 1.35;  // tape ribbon scale ceiling
 
     function apply() {
       queued = false;
@@ -443,27 +460,39 @@
         const dx = mx - cx, dy = my - cy;
 
         if (svg.dataset.kind === "extend") {
-          const part = svg.querySelector(".track-extend");
-          if (!part) return;
-          // Ribbon pulls out to the right; length tracks horizontal reach.
+          const ribbon = svg.querySelector(".track-extend");
+          if (!ribbon) return;
           const reach = Math.max(0, dx) + Math.abs(dy) * 0.15;
           const norm = Math.max(0, Math.min(1, reach / (r.width * 1.6)));
-          const scale = EXTEND_MIN + norm * (EXTEND_MAX - EXTEND_MIN);
-          part.style.transform = `scaleX(${scale})`;
+          ribbon.style.transform = `scaleX(${(0.45 + norm * 0.9).toFixed(3)})`;
           return;
         }
 
-        const part = svg.querySelector(".track-yaw");
-        if (!part) return;
-        // Face the cursor's side; tilt by vertical angle, bounded.
-        const facingLeft = dx < 0;
-        const tilt = Math.max(-TILT_MAX, Math.min(TILT_MAX,
-          Math.atan2(dy, Math.abs(dx) + 0.001) * 180 / Math.PI * 0.6));
-        const flip = facingLeft ? -1 : 1;
-        // Mirror first (face left/right), then tilt around the pivot.
-        part.style.transform = `scaleX(${flip}) rotate(${flip * tilt}deg)`;
+        const pan = svg.querySelector(".track-pan");
+        const tilt = svg.querySelector(".track-tilt");
+        if (!pan || !tilt) return;
+
+        // Azimuth is degenerate when the cursor sits on the instrument's
+        // vertical axis, so hold the current side until the cursor clears a
+        // dead band. Without this the alidade flickers on tiny movements.
+        const DEAD = r.width * 0.12;
+        let facingLeft = svg.dataset.facingLeft === "1";
+        if (dx < -DEAD) facingLeft = true;
+        else if (dx > DEAD) facingLeft = false;
+        svg.dataset.facingLeft = facingLeft ? "1" : "0";
+
+        const limit = parseFloat(svg.dataset.tiltMax || "30");
+        const elev = Math.atan2(dy, Math.abs(dx)) * 180 / Math.PI;
+        const clamped = Math.max(-limit, Math.min(limit, elev));
+
+        // rotateY is a real rotation about the vertical axis, so swinging
+        // from one side to the other foreshortens the way an alidade does,
+        // instead of collapsing through zero width like a scaleX mirror.
+        pan.style.transform = `rotateY(${facingLeft ? 180 : 0}deg)`;
+        tilt.style.transform = `rotate(${clamped.toFixed(2)}deg)`;
       });
     }
+
     function queue() {
       if (!queued) { queued = true; requestAnimationFrame(apply); }
     }

@@ -192,7 +192,7 @@ const SITE = {
       venue: "2026 IEEE EMBC",
       kind: "Conference",
       year: "2026",
-      status: "Under review",
+      status: "Published, presented",
       abstract: "Presents GeoFuse, an open-source toolbox for quantifying and fusing greenspace exposure metrics (street-level Green View Index and satellite-derived NDVI) at scale, designed for digital health research workflows on HPC infrastructure.",
       link: "https://github.com/Healthy-City-Lab/GeoFuse",
       linkLabel: "Repository",
